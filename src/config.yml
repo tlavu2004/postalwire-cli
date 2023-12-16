@@ -1,0 +1,25 @@
+General:
+  Username: vu
+  Password: 123
+  MailServer: 127.0.0.1
+  SMTP: 2500
+  POP3: 1100
+  Autoload: 10
+Filter:
+  From:
+    ahihi@testing.com
+    ahuu@testing.com
+  To folder (From): Project
+  Subject:
+    urgent
+    ASAP
+  To folder (Important): Important
+  Content:
+    report
+    meeting
+  To folder (Content): Work
+  Spam:
+    virus
+    hack
+    crack
+  To folder (Spam): Spam
