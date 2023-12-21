@@ -13,21 +13,21 @@ with open('config.yml', encoding='utf-8') as f:
 email_user = config['General']['Username']
 email_pass = config['General']['Password']
 mail_host = config['General']['MailServer']
-smtp_mailserver = config['General']['SMTP']
-pop3_mailserver = config['General']['POP3']
+smtp_port = config['General']['SMTP']
+pop3_port = config['General']['POP3']
 autoload = config['General']['Autoload']
 
 # Set the attachment size limit to 3MB
 MAX_ATTACHMENT_SIZE = 3 * 1024 * 1024  # 3MB
 
 def menu_sendmail():
-    mail: SentMail
     #os.system("cls")
-    mail.tos = input("To (comma-separated): ").split(',')
-    mail.ccs = input("CC (comma-separated): ").split(',')
-    mail.bccs = input("BCC (comma-separated): ").split(',')
-    mail.subject = input("Subject: ")
-    mail.content = input("Content: ")
+    tos = input("To (comma-separated): ").split(',')
+    ccs = input("CC (comma-separated): ").split(',')
+    bccs = input("BCC (comma-separated): ").split(',')
+    subject = input("Subject: ")
+    content = input("Content: ")
+    attachments = []
 
     send_attachment = input("Include attachments? (1. Yes, 2. No): ")
     if send_attachment == '1':
@@ -38,7 +38,7 @@ def menu_sendmail():
             except ValueError:
                 print("Invalid input. Please enter a valid number.")
 
-        mail.attachments = []
+        attachments = []
         for i in range(num_attachments):
             attachment_path = input(f"Enter path for attachment {i + 1}: ")
             cont = True
@@ -58,16 +58,40 @@ def menu_sendmail():
                     print("Please choose again: ")
             
             if cont == True:
-                mail.attachments.append(attachment_path.strip('"\''))
+                attachments.append(attachment_path.strip('"\''))
 
+    mail = SentMail(email_user, tos, ccs, bccs, subject, content, attachments)
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
-        client_socket.connect((mail_host, smtp_mailserver))
+        client_socket.connect((mail_host, smtp_port))
         print("Sending email...")
         send_email(client_socket, mail)
         print("Sending successfully")
          
 def menu_receivemail():
-    dir = input()
+    dir = input("Chọn thư mục muốn lưu mail: ")
+    mails = []
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+        client_socket.connect((mail_host, pop3_port))
+        mails = receive_emails_from_server(client_socket, email_user, email_pass, dir)
+    print("Danh sách mail đã tải về:")
+    for i in range(len(mails)):
+        print(f"{i+1}. {mails[i]}")
+    choice = int(input("Chọn mail bạn muốn đọc: ")) - 1
+    mail = Receivedmail(dir + '/' + mails[choice])
+    mail.display()
+    print("Danh sách các file trong mail ")
+    for file in mail.Attachments:
+        print(f"{file.name}")
+
+    choice= input("Bạn có muốn lưu file không ? Yes : 1 No : 0")
+    if choice == '1':
+        path=input("Nhập đường dẫn để lưu file : ")
+        file_name=input("Nhập tên file muốn lưu : ")
+        mail.save_file(path,file_name)
+    
+            
+
+    
 
 def main_menu():
     while True:

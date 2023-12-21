@@ -53,7 +53,6 @@ def send_email(client_socket:socket, mail : SentMail):
     msg['From'] = mail.sender
     msg['To'] = ', '.join(mail.tos)
     msg['CC'] = ', '.join(mail.ccs)
-    msg['BCC'] = ', '.join(mail.bccs)
     msg['Subject'] = mail.subject
     msg.attach(MIMEText(mail.content, 'plain'))
 
