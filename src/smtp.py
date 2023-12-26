@@ -5,10 +5,11 @@ import base64
 import yaml
 from os.path import basename
 from email.mime.application import MIMEApplication
+from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import COMMASPACE, formatdate
-
+from email import encoders
 
 # Set the attachment size limit to 3MB
 MAX_ATTACHMENT_SIZE = 3 * 1024 * 1024  # 3MB
@@ -56,19 +57,32 @@ def send_email(client_socket:socket, mail : SentMail):
     msg['Subject'] = mail.subject
     msg.attach(MIMEText(mail.content, 'plain'))
 
+    # file_path = 'path/to/your/file.txt'
+    # attachment = MIMEBase('application', 'octet-stream')
+    # attachment.set_payload(open(file_path, 'rb').read())
+    # encoders.encode_base64(attachment)
+    # attachment.add_header('Content-Disposition', f'attachment; filename="{file_path}"')
+    # msg.attach(attachment)
+
     for attachment_path in mail.attachments:
-        with open(attachment_path, 'rb') as file:
-            part = MIMEApplication(file.read(), Name=basename(attachment_path))
-            part['Content-Disposition'] = f'attachment; filename="{basename(attachment_path)}"'
-            msg.attach(part)
+        part = MIMEBase('application', 'octet-stream')
+        part.set_payload(open(attachment_path, 'rb').read())
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition', f'attachment; filename="{os.path.basename(attachment_path)}"')
+        msg.attach(part)
+
+        # with open(attachment_path, 'rb') as file:
+        #     part = MIMEApplication(file.read(), Name=basename(attachment_path))
+        #     part['Content-Disposition'] = f'attachment; filename="{basename(attachment_path)}"'
+        #     msg.attach(part)
 
     sk.send(client_socket, msg.as_string().encode() + "\r\n".encode())
 
-    # Send attachments
-    for attachment_path in mail.attachments:
-        with open(attachment_path, 'rb') as file:
-            file_content = base64.b64encode(file.read())
-            sk.send(client_socket , file_content)
+    # # Send attachments
+    # for attachment_path in mail.attachments:
+    #     with open(attachment_path, 'rb') as file:
+    #         file_content = base64.b64encode(file.read())
+    #         sk.send(client_socket , file_content)
 
     sk.send(client_socket, "\r\n.\r\n".encode())
     sk.recv(client_socket, 1)
@@ -76,6 +90,4 @@ def send_email(client_socket:socket, mail : SentMail):
     sk.send(client_socket,"QUIT\r\n".encode())
 
     print("Email sent successfully!")
-    # print("Email sent successfully! Press any key to return.")
-    # input()
 

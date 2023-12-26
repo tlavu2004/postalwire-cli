@@ -1,6 +1,8 @@
 import socket
 import os
 import yaml
+import threading
+import time
 from os.path import basename
 
 from smtp import *
@@ -16,6 +18,11 @@ mail_host = config['General']['MailServer']
 smtp_port = config['General']['SMTP']
 pop3_port = config['General']['POP3']
 autoload = config['General']['Autoload']
+mailbox = config['General']['Mailbox']
+
+with open(mailbox + '/' + email_user + 'ReadMails.yml') as f:
+    read_config = yaml.safe_load(f)
+read_list = read_config['List']
 
 # Set the attachment size limit to 3MB
 MAX_ATTACHMENT_SIZE = 3 * 1024 * 1024  # 3MB
@@ -45,7 +52,7 @@ def menu_sendmail():
 
             while os.path.getsize(attachment_path) > MAX_ATTACHMENT_SIZE:
                 print(f"File '{attachment_path}' is too large (more than 3MB), do you want to resend?")
-                print("1. Yes")
+                print("1. Yes") 
                 print("2. No")
                 choose = int(input())
 
@@ -68,33 +75,38 @@ def menu_sendmail():
         print("Sending successfully")
          
 def menu_receivemail():
-    dir = input("Chọn thư mục muốn lưu mail: ")
+    dir = mailbox + '\\' + email_user
+    os.makedirs(dir, exist_ok=True)
     mails = []
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
-        client_socket.connect((mail_host, pop3_port))
-        mails = receive_emails_from_server(client_socket, email_user, email_pass, dir)
+    for filename in os.listdir(dir):
+        file_path = os.path.join(dir, filename)
+        root, extension = os.path.splitext(file_path)
+        if extension == '.msg':
+            mails.append(Receivedmail(file_path))
+
+    
     print("Danh sách mail đã tải về:")
     for i in range(len(mails)):
-        print(f"{i+1}. {mails[i]}")
-    choice = int(input("Chọn mail bạn muốn đọc: ")) - 1
-    mail = Receivedmail(dir + '/' + mails[choice])
-    mail.display()
+        print(f"{i+1}. <{mails[i].Sender}> - f{mails[i].Subject}")
+
+    index = int(input("Chọn mail bạn muốn đọc: ")) - 1
+    mails[index].display()
     print("Danh sách các file trong mail ")
-    for file in mail.Attachments:
+    for file in mails[index].Attachments:
         print(f"{file.name}")
 
-    choice= input("Bạn có muốn lưu file không ? Yes : 1 No : 0")
+    choice = input("Bạn có muốn lưu file không ? (Yes : 1 No : 0): ")
     if choice == '1':
         path=input("Nhập đường dẫn để lưu file : ")
         file_name=input("Nhập tên file muốn lưu : ")
-        mail.save_file(path,file_name)
+        mails[index].save_file(path,file_name)
     
             
-
-    
+g_is_running = True
 
 def main_menu():
-    while True:
+    global g_is_running
+    while g_is_running:
         #os.system("cls")
         print("Vui lòng chọn Menu:")
         print("1. Để gửi email")
@@ -108,10 +120,41 @@ def main_menu():
         elif choice == '2':
             menu_receivemail()
         elif choice == '3':
+            g_is_running = False
             print("Đã thoát chương trình. Hẹn gặp lại!")
-            break
         else:
             print("Lựa chọn không hợp lệ. Vui lòng chọn lại.")
 
+def autoload_mails():
+    global g_is_running
+
+    user_dir = mailbox + '/' + email_user
+    os.makedirs(user_dir, exist_ok=True)
+
+    time_passed = 0.0
+
+    prev = 0.0
+    while g_is_running:
+        current_time = time.time()
+        time_passed += current_time - prev
+        prev = current_time
+        if (time_passed < autoload):
+            continue
+        time_passed = 0.0
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+            client_socket.connect((mail_host, pop3_port))
+            receive_emails_from_server(client_socket, email_user, email_pass, user_dir)
+
+def main():
+    main_menu_thread = threading.Thread(target=main_menu)
+    autoload_mails_thread = threading.Thread(target=autoload_mails)
+
+    main_menu_thread.start()
+    autoload_mails_thread.start()
+
+    main_menu_thread.join()
+    autoload_mails_thread.join()
+
+
 if __name__ == "__main__":
-    main_menu()
+    main()

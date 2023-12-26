@@ -21,7 +21,7 @@ class FileInfo:
         self.encoded_data = _data
 
 class Receivedmail:
-    def __init__(self, msg_path):
+    def __init__(self,msg_path ):
         self.Id = os.path.basename(msg_path)
         with open(msg_path, 'r') as file:
             file_content=file.read()
@@ -60,10 +60,10 @@ class Receivedmail:
         print(f"Content: {self.Content}")
 
 
-
+# -------------------------------------------------------------------- #
 
 # client_socket must be connected to the server before passing to the function
-def receive_emails_from_server(client_socket: socket, user, password, path):
+def receive_emails_from_server(client_socket: socket, user, password, dir):
     # Receive the welcome message
     sk.recv(client_socket, 1)
 
@@ -87,38 +87,23 @@ def receive_emails_from_server(client_socket: socket, user, password, path):
     for i in range(number_of_mails):
         mailnames[i] = re.split(' ', mailnames[i])[1]
     
+    existing_msgs = set()
+    for filename in os.listdir(dir):
+        file_path = os.path.join(dir, filename)
+        root, extension = os.path.splitext(file_path)
+        if extension == '.msg':
+            existing_msgs.add(filename)
+
     for i in range(number_of_mails):
+        if mailnames[i] in existing_msgs:
+            continue
         sk.send(client_socket,f"RETR {i+1}\r\n".encode())
         mail=sk.recv(client_socket, mail_size[i])
 
-        mail=mail[mail.find('\n')+1:]
+        mail=mail[mail.find('\n') + 1:]
         mail=mail.replace('\r', '')
-        with open(path+'/'+mailnames[i],'w') as file:
+
+        with open(dir + '/' + mailnames[i], 'w') as file:
             file.write(mail)
-    return mailnames
 
 
-
-# mailnames = Receive_emails_from_server("vy", "123", "msg")
-# print(mailnames)
-
-# maillist = [Receivedmail("msg/" + name) for name in mailnames]
-
-# print("Mails:")
-# for i in range(len(maillist)):
-#     print(f"{i + 1}. {maillist[i].Id}")
-#     #print(f"number of att: {len(maillist[i].Attachments)}")
-
-# for mail in maillist:
-#     mail.display()
-#     print(len(mail.Attachments))
-
-
-# choice = int(input("Chon mail ban muon doc: ")) - 1
-
-# maillist[choice].display()
-
-# input = input("Input save dir: ")
-# for file_info in maillist[choice].Attachments:
-#     print(file_info.name)
-#     maillist[choice].save_file(input, file_info.name)

@@ -1,10 +1,11 @@
 General:
-  Username: vu
+  Username: vy
   Password: 123
   MailServer: 127.0.0.1
   SMTP: 2500
   POP3: 1100
   Autoload: 10
+  Mailbox: msg
 Filter:
   From:
     ahihi@testing.com
