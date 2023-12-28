@@ -20,9 +20,7 @@ pop3_port = config['General']['POP3']
 autoload = config['General']['Autoload']
 mailbox = config['General']['Mailbox']
 
-with open(mailbox + '/' + email_user + 'ReadMails.yml') as f:
-    read_config = yaml.safe_load(f)
-read_list = read_config['List']
+read_mail_dir = f"{mailbox}/{email_user}/ReadMails.yml"
 
 # Set the attachment size limit to 3MB
 MAX_ATTACHMENT_SIZE = 3 * 1024 * 1024  # 3MB
@@ -75,32 +73,49 @@ def menu_sendmail():
         print("Sending successfully")
          
 def menu_receivemail():
-    dir = mailbox + '\\' + email_user
+    dir = f"{mailbox}/{email_user}"
     os.makedirs(dir, exist_ok=True)
+    read_list = {}
+    if  os.path.exists(read_mail_dir):
+        with open(read_mail_dir) as f:
+            read_list = yaml.safe_load(f)
     mails = []
     for filename in os.listdir(dir):
         file_path = os.path.join(dir, filename)
         root, extension = os.path.splitext(file_path)
         if extension == '.msg':
             mails.append(Receivedmail(file_path))
-
+            if not filename in read_list:
+                read_list[filename] = False
     
     print("Danh sách mail đã tải về:")
     for i in range(len(mails)):
-        print(f"{i+1}. <{mails[i].Sender}> - f{mails[i].Subject}")
+        print(f"{i + 1}. <{mails[i].Sender}> - {mails[i].Subject} {"" if read_list[mails[i].Id] else "(*)"}")
 
     index = int(input("Chọn mail bạn muốn đọc: ")) - 1
+    
+    read_list[mails[index].Id] = True
+
+    print("")
     mails[index].display()
-    print("Danh sách các file trong mail ")
+    print("\nDanh sách các file trong mail ")
     for file in mails[index].Attachments:
         print(f"{file.name}")
+    if not mails[index].Attachments:
+        print("empty")
 
-    choice = input("Bạn có muốn lưu file không ? (Yes : 1 No : 0): ")
-    if choice == '1':
-        path=input("Nhập đường dẫn để lưu file : ")
-        file_name=input("Nhập tên file muốn lưu : ")
-        mails[index].save_file(path,file_name)
-    
+    if mails[index].Attachments:
+        choice = input("Bạn có muốn lưu file không ? (Yes: 1, No: 0): ")
+        if choice == '1':
+            path=input("Nhập đường dẫn để lưu file : ")
+            file_name=input("Nhập tên file muốn lưu : ")
+            mails[index].save_file(path,file_name)
+
+    print("")
+
+    yaml_str = yaml.dump(read_list, default_flow_style=False)
+    with open(read_mail_dir, 'w') as f:
+        f.write(yaml_str)
             
 g_is_running = True
 
