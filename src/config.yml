@@ -6,21 +6,29 @@ General:
   POP3: 1100
   Autoload: 10
   Mailbox: msg
+
 Filter:
-  From:
-    ahihi@testing.com
-    ahuu@testing.com
-  To folder (From): Project
-  Subject:
-    urgent
-    ASAP
-  To folder (Important): Important
-  Content:
-    report
-    meeting
-  To folder (Content): Work
-  Spam:
-    virus
-    hack
-    crack
-  To folder (Spam): Spam
+  - Criteria: From
+    Addresses:
+      - ahihi@testing.com
+      - ahuu@testing.com
+    To_folder: Project
+
+  - Criteria: Subject
+    Keywords:
+      - urgent
+      - ASAP
+    To_folder: Important
+
+  - Criteria: Content
+    Keywords:
+      - report
+      - meeting
+    To_folder: Work
+
+  - Criteria: Spam
+    Keywords:
+      - virus
+      - hack
+      - crack
+    To_folder: Spam

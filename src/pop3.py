@@ -14,6 +14,11 @@ import email
 from email import policy
 from email.parser import BytesParser
 
+with open('./Clone/Socket/src/config.yml', encoding='utf-8') as f:
+    config = yaml.safe_load(f)
+
+email_user = config['General']['Username']
+mailbox = config['General']['Mailbox']
 
 class FileInfo:
     def __init__(self, name, _data):
@@ -21,7 +26,7 @@ class FileInfo:
         self.encoded_data = _data
 
 class Receivedmail:
-    def __init__(self,msg_path ):
+    def __init__(self, msg_path):
         self.Id = os.path.basename(msg_path)
         with open(msg_path, 'r') as file:
             file_content=file.read()
@@ -61,6 +66,32 @@ class Receivedmail:
 
 
 # -------------------------------------------------------------------- #
+
+def update_mail_classification(mail_path, classification):
+    mail_classification_file = f"./Clone/Socket/src/{mailbox}/{email_user}/MailClassification.yml"
+    if not os.path.exists(mail_classification_file):
+        with open(mail_classification_file, 'w') as f:
+            f.write("")
+    with open(mail_classification_file, 'a') as f:
+        f.write(f"{mail_path}: {classification}\n")
+
+def classify_mail(mail):
+    # Load SMTP Configuration
+    with open('./Clone/Socket/src/config.yml', encoding='utf-8') as f:
+        config = yaml.safe_load(f)
+    filters = config.get('Filter', [])
+    for filter_rule in filters:
+        criteria = filter_rule.get('Criteria')
+        to_folder = filter_rule.get('To_folder')
+        if criteria == 'From' and mail.Sender in filter_rule.get('Addresses', []):
+            return to_folder
+        elif criteria == 'Subject' and any(keyword.lower() in mail.Subject.lower() for keyword in filter_rule.get('Keywords', [])):
+            return to_folder
+        elif criteria == 'Content' and any(keyword.lower() in mail.Content.lower() for keyword in filter_rule.get('Keywords', [])):
+            return to_folder
+        elif criteria == 'Spam' and any(keyword.lower() in mail.Subject.lower() or keyword.lower() in mail.Content.lower() for keyword in filter_rule.get('Keywords', [])):
+            return to_folder
+    return 'Inbox'  # Default to 'Inbox' if no match
 
 # client_socket must be connected to the server before passing to the function
 def receive_emails_from_server(client_socket: socket, user, password, dir):
@@ -106,4 +137,7 @@ def receive_emails_from_server(client_socket: socket, user, password, dir):
         with open(dir + '/' + mailnames[i], 'w') as file:
             file.write(mail)
 
-
+        # Classify and update MailClassification.yml
+        received_mail = Receivedmail(dir + '/' + mailnames[i])
+        classification = classify_mail(received_mail)
+        update_mail_classification(mailnames[i], classification)
