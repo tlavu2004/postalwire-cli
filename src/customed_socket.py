@@ -6,5 +6,5 @@ def send(sender: socket, msg):
 def recv(receiver, size):
     res = ""
     while (len(res) < size):
-        res += receiver.recv(300000).decode()
+        res += receiver.recv(100000).decode()
     return res
