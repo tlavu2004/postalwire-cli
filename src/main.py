@@ -37,32 +37,32 @@ def menu_sendmail():
     content = input("Content: ")
     attachments = []
 
-    send_attachment = int(input("Bạn muốn thêm file đính kèm không ? (1. Yes, 0. No): "))
+    send_attachment = input("Bạn có muốn thêm file đính kèm không? (1. Yes, 0. No): ")
     if send_attachment == '1':
         while True:
             try:
                 num_attachments = int(input("Số lượng file đính kèm: "))
                 break
             except ValueError:
-                print("Đầu vào không hợp lệ. Vui lòng nhập số hợp lệ.")
+                print("Đầu vào không hợp lệ. Vui lòng nhập số hợp lệ khác.")
 
         attachments = []
         for i in range(num_attachments):
             attachment_path = ""
             while True:
-                attachment_path = int(input(f"Nhập đường dẫn file  {i + 1}: "))
+                attachment_path = input(f"Nhập đường dẫn file {i + 1}: ")
                 cont = True
                 if (os.path.exists(attachment_path)):
                     break
 
             while os.path.getsize(attachment_path) > MAX_ATTACHMENT_SIZE:
-                print(f"File '{attachment_path}'quá lớn (hơn 3 MB), bạn có muốn gửi lại không?")
+                print(f"File '{attachment_path}' quá lớn (hơn 3 MB), bạn có muốn gửi lại không?")
                 print("1. Yes") 
                 print("2. No")
                 choose = int(input())
 
                 if (choose == 1):
-                    attachment_path = int(input(f"Nhập đường dẫn file {i + 1}: "))
+                    attachment_path = input(f"Nhập đường dẫn file {i + 1}: ")
                 elif (choose == 2):
                     cont = False
                     break
@@ -75,9 +75,9 @@ def menu_sendmail():
     mail = SentMail(email_user, tos, ccs, bccs, subject, content, attachments)
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
         client_socket.connect((mail_host, smtp_port))
-        print("Đang gửi mail...")
+        print("Đang gửi email...")
         send_email(client_socket, mail)
-        print("Gửi mail thành công")
+        print("Gửi email thành công ")
 
 def menu_receivemail():
     menu_receivemail_is_running = True
