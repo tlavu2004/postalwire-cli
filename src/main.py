@@ -37,37 +37,37 @@ def menu_sendmail():
     content = input("Content: ")
     attachments = []
 
-    send_attachment = input("Include attachments? (1. Yes, 0. No): ")
+    send_attachment = int(input("Bạn muốn thêm file đính kèm không ? (1. Yes, 0. No): "))
     if send_attachment == '1':
         while True:
             try:
-                num_attachments = int(input("Number of attachments: "))
+                num_attachments = int(input("Số lượng file đính kèm: "))
                 break
             except ValueError:
-                print("Invalid input. Please enter a valid number.")
+                print("Đầu vào không hợp lệ. Vui lòng nhập số hợp lệ.")
 
         attachments = []
         for i in range(num_attachments):
             attachment_path = ""
             while True:
-                attachment_path = input(f"Enter path for attachment {i + 1}: ")
+                attachment_path = int(input(f"Nhập đường dẫn file  {i + 1}: "))
                 cont = True
                 if (os.path.exists(attachment_path)):
                     break
 
             while os.path.getsize(attachment_path) > MAX_ATTACHMENT_SIZE:
-                print(f"File '{attachment_path}' is too large (more than 3MB), do you want to resend?")
+                print(f"File '{attachment_path}'quá lớn (hơn 3 MB), bạn có muốn gửi lại không?")
                 print("1. Yes") 
                 print("2. No")
                 choose = int(input())
 
                 if (choose == 1):
-                    attachment_path = input(f"Enter path for attachment {i + 1}: ")
+                    attachment_path = int(input(f"Nhập đường dẫn file {i + 1}: "))
                 elif (choose == 2):
                     cont = False
                     break
                 else:
-                    print("Please choose again: ")
+                    print("Vui lòng chọn lại: ")
             
             if cont == True:
                 attachments.append(attachment_path.strip('"\''))
@@ -75,9 +75,9 @@ def menu_sendmail():
     mail = SentMail(email_user, tos, ccs, bccs, subject, content, attachments)
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
         client_socket.connect((mail_host, smtp_port))
-        print("Sending email...")
+        print("Đang gửi mail...")
         send_email(client_socket, mail)
-        print("Sending successfully")
+        print("Gửi mail thành công")
 
 def menu_receivemail():
     menu_receivemail_is_running = True
