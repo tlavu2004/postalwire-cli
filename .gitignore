@@ -1,3 +1,41 @@
+# Build output
+target/
+build/
+out/
+bin/
+*.class
+*.jar
+
+# IDE metadata
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# Local runtime data and exercise assets
 src/msg/
 src/assets/
 src/__pycache__/
+test-mail-server-*.jar
+mail-data/
+logs/
+
+# Local configuration and secrets
+.env
+.env.*
+*.local
+application-local.properties
+application-local.yml
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Java tooling
+.mvn/wrapper/maven-wrapper.jar
+hs_err_pid*.log
+replay_pid*.log
